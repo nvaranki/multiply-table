@@ -1,0 +1,2 @@
+- PS\> .venv\Scripts\activate.ps1
+- PS\>  pip3 install torch --index-url https://download.pytorch.org/whl/cu126
