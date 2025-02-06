@@ -11,16 +11,8 @@ from Train import Train
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    # Example dataset
-    data = [
-        "hello world",
-        "how are you",
-        "transformers are amazing",
-        "hello transformers",
-        "world of machine learning"
-    ]
-    ds = TextDataset(data)
-    dl = DataLoader(ds, batch_size=2, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
+    ds = TextDataset(Train.generate((1,10),(1,10)))
+    dl = DataLoader(ds, batch_size=5, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
 
     # Model parameters
     embed_size = 128

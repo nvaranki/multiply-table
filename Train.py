@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -36,3 +38,11 @@ class Train:
             print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
 
         print("Training complete!")
+
+    @staticmethod
+    def generate(r1: tuple, r2: tuple, op: str = " * ", eq: str = " = ") -> List[str]:
+        rl = list()
+        for a in range(r1[0],r1[1]+1):
+            for b in range(r2[0],r2[1]+1):
+                rl.append( str(a) + op + str(b) + eq + str(a*b) )
+        return rl

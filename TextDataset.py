@@ -9,13 +9,12 @@ class TextDataset(Dataset):
         self.vocab = {word: i for i, word in enumerate(set(" ".join(data).split()))}
         self.vocab_size = len(self.vocab)
         # tokenized data
-        self.data = [TextDataset.__tokenize_and_convert_to_indices(
-            sentence, self.vocab) for sentence in data]
+        self.data = [self.__tokenize_and_convert_to_indices(sentence)
+            for sentence in data]
 
     # Tokenize and convert to indices
-    @staticmethod
-    def __tokenize_and_convert_to_indices(sentence, vocab):
-        return [vocab[word] for word in sentence.split()]
+    def __tokenize_and_convert_to_indices(self, sentence):
+        return [self.vocab[word] for word in sentence.split()]
 
     def __len__(self):
         return len(self.data)
