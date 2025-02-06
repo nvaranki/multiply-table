@@ -1,4 +1,6 @@
 # This is a sample Python script.
+import torch.cuda
+
 from MultiplyModel import MultiplyModel
 from TextDataset import TextDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -25,10 +27,12 @@ if __name__ == '__main__':
     num_heads = 2
     hidden_dim = 512
     num_layers = 2
-    model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers)
+    device = torch.device("cuda:0")
+    dtype = torch.bfloat16
+    model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
 
     # Training loop
     num_epochs = 10
     learning_rate = 0.001
     trainer = Train(model, ds.vocab_size, learning_rate)
-    trainer.run(num_epochs, dl, ds.vocab_size)
+    trainer.run(num_epochs, dl, ds.vocab_size, device)

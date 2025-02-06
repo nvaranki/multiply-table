@@ -16,9 +16,10 @@ class Train:
         self.criterion = nn.CrossEntropyLoss(ignore_index=vocab_size)
         self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
 
-    def run(self, num_epochs: int, dataloader, vocab_size: int):
+    def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
         for epoch in range(num_epochs):
             for batch in dataloader:
+                batch = batch.to(device)
                 src = batch[:, :-1]
                 tgt = torch.unsqueeze(batch[:, -1],dim=1)
 
