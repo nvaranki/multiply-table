@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.optim as op
 
@@ -19,7 +20,7 @@ class Train:
         for epoch in range(num_epochs):
             for batch in dataloader:
                 src = batch[:, :-1]
-                tgt = batch[:, 1:]
+                tgt = torch.unsqueeze(batch[:, -1],dim=1)
 
                 self.optimizer.zero_grad()
                 output = self.model(src, tgt)

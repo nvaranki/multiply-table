@@ -6,13 +6,13 @@ class MultiplyModel(nn.Module):
 
     def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers):
         super(MultiplyModel, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embed_size)
+        self.embedding = nn.Embedding(vocab_size+1, embed_size, padding_idx=vocab_size)
         self.encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(embed_size, num_heads, hidden_dim),
+            nn.TransformerEncoderLayer(embed_size, num_heads, hidden_dim, batch_first=True),
             num_layers
         )
         self.decoder = nn.TransformerDecoder(
-            nn.TransformerDecoderLayer(embed_size, num_heads, hidden_dim),
+            nn.TransformerDecoderLayer(embed_size, num_heads, hidden_dim, batch_first=True),
             num_layers
         )
         self.fc = nn.Linear(embed_size, vocab_size)
