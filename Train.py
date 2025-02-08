@@ -19,6 +19,7 @@ class Train:
         self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
 
     def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
+        floss = None
         for epoch in range(num_epochs):
             for batch in dataloader:
                 batch = batch.to(device)
@@ -32,12 +33,14 @@ class Train:
                 tgt = tgt.view(-1)
 
                 loss = self.criterion(output, tgt)
+                floss = loss
                 loss.backward()
                 self.optimizer.step()
 
             print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
 
         print("Training complete!")
+        return floss.item()
 
     @staticmethod
     def generate(r1: tuple, r2: tuple, op: str = " * ", eq: str = " = ") -> List[str]:
