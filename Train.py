@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Union
 
+import os.path
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -49,3 +50,48 @@ class Train:
             for b in range(r2[0],r2[1]+1):
                 rl.append( str(a) + op + str(b) + eq + str(a*b) )
         return rl
+
+    def load(self) -> Union[str,None]:
+        """load the last saved model"""
+        ss = [n for n in os.listdir("data") if n.startswith("snapshot") and n.endswith(".pt")]
+        if len(ss) > 0:
+            ss.sort(reverse=True)
+            fn = os.path.join("data", ss[0])
+            self.model.load_state_dict(torch.load(fn, weights_only=True))
+            self.model.eval()
+            return fn
+        else:
+            return None
+
+    def save(self, **kwa) -> str:
+        """save the model with notes"""
+
+        import datetime
+        dt = datetime.datetime.now().isoformat(timespec='seconds').replace("-","").replace("T","").replace(":","")
+        mfn = os.path.join("data", f"snapshot{dt}.pt")
+        tfn = os.path.join("data", f"snapshot{dt}.txt")
+
+        torch.save(self.model.state_dict(), mfn)
+        # Print model's state_dict
+        with open(tfn, 'wt') as f:
+            f.write("Model's parameters:\n")
+            f.write("embed_size\t" + str(kwa["embed_size"]) + "\n")
+            f.write("num_heads\t"  + str(kwa["num_heads"])  + "\n")
+            f.write("hidden_dim\t" + str(kwa["hidden_dim"]) + "\n")
+            f.write("num_layers\t" + str(kwa["num_layers"]) + "\n")
+            f.write("dtype\t"      + str(kwa["dtype"])      + "\n")
+            f.write("num_epochs\t" + str(kwa["num_epochs"]) + "\n")
+            f.write("learning_rate\t" + str(kwa["learning_rate"]) + "\n")
+            f.write("loss\t" + f"{kwa["loss"]:.4f}" + "\n")
+            f.write("Model's state_dict:\n")
+            nps: int = 0
+            for pt in self.model.state_dict():
+                size = self.model.state_dict()[pt].size()
+                f.write(str(pt) + "\t" + str(size) + "\n")
+                npa = 1
+                for s in size:
+                    npa *= s
+                nps += npa
+            f.write(f"Total number of parameters: {nps}\n")
+
+        return mfn
