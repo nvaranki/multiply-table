@@ -51,25 +51,25 @@ class Train:
                 rl.append( str(a) + op + str(b) + eq + str(a*b) )
         return rl
 
-    def load(self) -> Union[str,None]:
+    def load(self, dir="data") -> Union[str,None]:
         """load the last saved model"""
-        ss = [n for n in os.listdir("data") if n.startswith("snapshot") and n.endswith(".pt")]
+        ss = [n for n in os.listdir(dir) if n.startswith("snapshot") and n.endswith(".pt")]
         if len(ss) > 0:
             ss.sort(reverse=True)
-            fn = os.path.join("data", ss[0])
+            fn = os.path.join(dir, ss[0])
             self.model.load_state_dict(torch.load(fn, weights_only=True))
             self.model.eval()
             return fn
         else:
             return None
 
-    def save(self, **kwa) -> str:
+    def save(self, dir="data", **kwa) -> str:
         """save the model with notes"""
 
         import datetime
         dt = datetime.datetime.now().isoformat(timespec='seconds').replace("-","").replace("T","").replace(":","")
-        mfn = os.path.join("data", f"snapshot{dt}.pt")
-        tfn = os.path.join("data", f"snapshot{dt}.txt")
+        mfn = os.path.join(dir, f"snapshot{dt}.pt")
+        tfn = os.path.join(dir, f"snapshot{dt}.txt")
 
         torch.save(self.model.state_dict(), mfn)
         # Print model's state_dict

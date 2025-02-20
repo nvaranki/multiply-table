@@ -26,11 +26,11 @@ if __name__ == '__main__':
     num_epochs = 10
     learning_rate = 0.001
     trainer = Train(model, ds.vocab_size, learning_rate)
-    weights = trainer.load()
+    weights = trainer.load("data")
     print("New model has been created." if weights is None
           else f"Loaded last saved weights from \"{weights}\" into the model.")
     loss = trainer.run(num_epochs, dl, ds.vocab_size, device)
-    weights = trainer.save(embed_size=embed_size, num_heads=num_heads, hidden_dim=hidden_dim, num_layers=num_layers,
+    weights = trainer.save("data", embed_size=embed_size, num_heads=num_heads, hidden_dim=hidden_dim, num_layers=num_layers,
                            dtype=dtype, num_epochs=num_epochs, learning_rate=learning_rate, loss=loss)
     print(f"The model weights saved to \"{weights}\".")
 
