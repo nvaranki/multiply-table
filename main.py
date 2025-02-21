@@ -14,7 +14,8 @@ if __name__ == '__main__':
     cli.add_argument("--new", action='store_const', const=True, required=False, default=False, metavar="NEW", help="start with blank model")
     args = cli.parse_args()
 
-    ds = TextDataset(Train.generate((1,10),(1,10))) # TODO load blank only, use 0 as padding index
+    # TODO load blank only, use 0 as padding index
+    ds = TextDataset(Train.generate((1,10),(1,10), [" * ", " times "], [" = ", " equals "]))
     dl = DataLoader(ds, batch_size=5, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
 
     # Model parameters
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
 
     # Training loop
-    num_epochs = 10
+    num_epochs = 400  # Loss: 0.0044 # TODO 100
     learning_rate = 0.001
     trainer = Train(model, ds.vocab_size, learning_rate)
     backup = trainer.load("data") if not args.new else None
