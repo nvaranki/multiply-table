@@ -6,7 +6,9 @@ class TextDataset(Dataset):
 
     def __init__(self, data):
         # Vocabulary (token-to-index mapping)
-        self.vocab = {word: i for i, word in enumerate(set(" ".join(data).split()))}
+        words = list(set(" ".join(data).split()))
+        words.sort()
+        self.vocab = {word: i for i, word in enumerate(words)}
         self.vocab_size = len(self.vocab)
         # tokenized data
         self.data = [self.__tokenize_and_convert_to_indices(sentence)
