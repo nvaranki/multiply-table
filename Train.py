@@ -24,9 +24,10 @@ class Train:
     criterion = nn.Module
     optimizer = op.Optimizer
 
-    def __init__(self, model: nn.Module, vocab_size: int, learning_rate: float):
+    def __init__(self, model: nn.Module, vocab_size: int, padding_value: int, learning_rate: float):
         self.model = model
         self.vocab_size = vocab_size
+        self.padding_value = padding_value
         self.criterion = nn.CrossEntropyLoss(ignore_index=vocab_size)
         self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
 
@@ -39,7 +40,10 @@ class Train:
                 tgt = torch.unsqueeze(batch[:, -1],dim=1)
 
                 self.optimizer.zero_grad()
-                output = self.model(src, tgt)
+                # with torch.no_grad():
+                pad = torch.zeros(size=tgt.size(), dtype=tgt.dtype)
+                pad[:,-1] = self.padding_value
+                output = self.model(src, pad.to(device=device))
 
                 output = output.view(-1, vocab_size)
                 tgt = tgt.view(-1)
@@ -85,11 +89,14 @@ class Train:
         mfn = os.path.join(dir, f"snapshot{dt}.pt")     # model
         tfn = os.path.join(dir, f"snapshot{dt}.txt")    # memo
         bwp = os.path.join(dir, f"snapshot{dt}w.json")  # weighs
+        # btp = os.path.join(dir, f"snapshot{dt}t.json")  # tokens
         bvp = os.path.join(dir, f"snapshot{dt}v.json")  # vocabulary
 
         torch.save(self.model.state_dict(), mfn)
         with open(bwp, "wt") as f:
             json.dump(self.model.state_dict(), f, cls=EncodeTensor)
+        # with open(btp, "wt") as f:
+        #     json.dump(kwa["tokens"], f, cls=EncodeTensor)
         with open(bvp, "wt") as f:
             json.dump(kwa["vocab"], f, cls=EncodeTensor)
         # Print model's state_dict

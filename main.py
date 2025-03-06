@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # Training loop
     num_epochs = 400  # Loss: 0.0044 # TODO 100
     learning_rate = 0.001
-    trainer = Train(model, ds.vocab_size, learning_rate)
+    trainer = Train(model, ds.vocab_size, ds.vocab_size, learning_rate)
     backup = trainer.load("data") if not args.new else None
     print("New model has been created." if backup is None
           else f"Loaded last saved weights from \"{backup}\" into the model.")
