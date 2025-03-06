@@ -24,7 +24,7 @@ if __name__ == '__main__':
     hidden_dim = 512
     num_layers = 2
     device = torch.device("cuda:0")
-    dtype = torch.bfloat16
+    dtype = torch.float
     model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
 
     # Training loop
