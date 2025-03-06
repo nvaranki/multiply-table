@@ -36,7 +36,7 @@ if __name__ == '__main__':
           else f"Loaded last saved weights from \"{backup}\" into the model.")
     loss = trainer.run(num_epochs, dl, ds.vocab_size, device)
     backup = trainer.save("data", embed_size=embed_size, num_heads=num_heads, hidden_dim=hidden_dim, num_layers=num_layers,
-                          dtype=dtype, num_epochs=num_epochs, learning_rate=learning_rate, loss=loss)
+                          dtype=dtype, num_epochs=num_epochs, learning_rate=learning_rate, loss=loss, vocab=ds.vocab)
     print(f"The model weights saved to \"{backup}\".")
 
     print("Well done!")

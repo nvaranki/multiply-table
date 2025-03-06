@@ -1,9 +1,20 @@
+import json
 from typing import List, Union
 
 import os.path
 import torch
 import torch.nn as nn
 import torch.optim as op
+from torch.utils.data import Dataset
+from json import JSONEncoder
+
+
+class EncodeTensor(JSONEncoder, Dataset):
+    def default(self, obj):
+        if isinstance(obj, torch.Tensor):
+            return obj.cpu().detach().numpy().tolist()
+        else:
+            return super(EncodeTensor, self).default(obj)
 
 
 class Train:
@@ -71,10 +82,16 @@ class Train:
 
         import datetime
         dt = datetime.datetime.now().isoformat(timespec='seconds').replace("-","").replace("T","").replace(":","")
-        mfn = os.path.join(dir, f"snapshot{dt}.pt")
-        tfn = os.path.join(dir, f"snapshot{dt}.txt")
+        mfn = os.path.join(dir, f"snapshot{dt}.pt")     # model
+        tfn = os.path.join(dir, f"snapshot{dt}.txt")    # memo
+        bwp = os.path.join(dir, f"snapshot{dt}w.json")  # weighs
+        bvp = os.path.join(dir, f"snapshot{dt}v.json")  # vocabulary
 
         torch.save(self.model.state_dict(), mfn)
+        with open(bwp, "wt") as f:
+            json.dump(self.model.state_dict(), f, cls=EncodeTensor)
+        with open(bvp, "wt") as f:
+            json.dump(kwa["vocab"], f, cls=EncodeTensor)
         # Print model's state_dict
         with open(tfn, 'wt') as f:
             f.write("Model's parameters:\n")
