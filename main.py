@@ -19,10 +19,10 @@ if __name__ == '__main__':
     dl = DataLoader(ds, batch_size=5, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
 
     # Model parameters
-    embed_size = 128
-    num_heads = 2
-    hidden_dim = 512
-    num_layers = 2
+    embed_size = 16
+    num_heads = 1  # Loss: 0.0462 TODO 4 Loss: 0.1402
+    hidden_dim = 64
+    num_layers = 4  # faster than 8 Loss: 0.0476
     device = torch.device("cuda:0")
     dtype = torch.float
     model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
