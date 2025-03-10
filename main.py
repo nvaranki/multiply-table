@@ -22,7 +22,7 @@ if __name__ == '__main__':
     embed_size = 16
     num_heads = 1  # Loss: 0.0462 TODO 4 Loss: 0.1402
     hidden_dim = 64
-    num_layers = 4  # faster than 8 Loss: 0.0476
+    num_layers = 1 # last three were useless 4  # faster than 8 Loss: 0.0476
     device = torch.device("cuda:0")
     dtype = torch.float
     model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
