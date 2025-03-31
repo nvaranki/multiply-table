@@ -53,7 +53,13 @@ class Train:
                 loss.backward()
                 self.optimizer.step()
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+            loss_item = loss.item()
+            if int(loss_item*100000000) == 0:
+                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
+            elif int(loss_item*10000) == 0:
+                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
+            else:
+                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
 
         print("Training complete!")
         return floss.item()
@@ -109,7 +115,7 @@ class Train:
             f.write("dtype\t"      + str(kwa["dtype"])      + "\n")
             f.write("num_epochs\t" + str(kwa["num_epochs"]) + "\n")
             f.write("learning_rate\t" + str(kwa["learning_rate"]) + "\n")
-            f.write("loss\t" + f"{kwa["loss"]:.4f}" + "\n")
+            f.write("loss\t" + f"{kwa["loss"]:.15f}" + "\n")
             f.write("Model's state_dict:\n")
             nps: int = 0
             for pt in self.model.state_dict():
