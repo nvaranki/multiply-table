@@ -1,2 +1,4 @@
 .venv/
+.idea/workspace.xml
 data/snapshot*.*
+data/media/
