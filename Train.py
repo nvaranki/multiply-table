@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as op
 from torch.utils.data import Dataset
 from json import JSONEncoder
+from BinaryDecoder import BinaryDecoder, DecoderLoss
 
 
 class EncodeTensor(JSONEncoder, Dataset):
@@ -29,6 +30,7 @@ class Train:
         self.vocab_size = vocab_size
         self.padding_value = padding_value
         self.criterion = nn.CrossEntropyLoss(ignore_index=vocab_size)
+        self.criterion = nn.MSELoss()
         self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
 
     def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
@@ -45,24 +47,25 @@ class Train:
                 pad[:,-1] = self.padding_value
                 output = self.model(src, pad.to(device=device))
 
-                output = output.view(-1, vocab_size)
+                output = output.view(-1, self.model.embed_size)
                 tgt = tgt.view(-1)
 
-                loss = self.criterion(output, tgt)
-                floss = loss
+                loss = self.criterion(output, DecoderLoss.vector(tgt,self.model.embed_size))
+                floss = loss.item()
                 loss.backward()
                 self.optimizer.step()
 
-            loss_item = loss.item()
-            if int(loss_item*100000000) == 0:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
-            elif int(loss_item*10000) == 0:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
-            else:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
+            if floss is not None:
+                loss_item = floss
+                if int(loss_item*100000000) == 0:
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
+                elif int(loss_item*10000) == 0:
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
+                else:
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
 
         print("Training complete!")
-        return floss.item()
+        return floss
 
     @staticmethod
     def generate(r1: tuple, r2: tuple, op: List[str] = " * ", eq: List[str] = " = ") -> List[str]:
