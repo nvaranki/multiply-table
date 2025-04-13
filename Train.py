@@ -36,6 +36,8 @@ class Train:
     def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
         floss = None
         for epoch in range(num_epochs):
+            nb = 0
+            floss = 0.0
             for batch in dataloader:
                 batch = batch.to(device)
                 src = batch[:, :-1]
@@ -51,7 +53,8 @@ class Train:
                 tgt = tgt.view(-1)
 
                 loss = self.criterion(output, DecoderLoss.vector(tgt,self.model.embed_size))
-                floss = loss.item()
+                nb += 1
+                floss += (loss.item()-floss)/nb  # mean across all batches
                 loss.backward()
                 self.optimizer.step()
 
