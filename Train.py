@@ -101,16 +101,24 @@ class Train:
         mfn = os.path.join(dir, f"snapshot{dt}.pt")     # model
         tfn = os.path.join(dir, f"snapshot{dt}.txt")    # memo
         bwp = os.path.join(dir, f"snapshot{dt}w.json")  # weighs
+        bwg = os.path.join(dir, f"snapshot{dt}g.json")  # gradients
         # btp = os.path.join(dir, f"snapshot{dt}t.json")  # tokens
         bvp = os.path.join(dir, f"snapshot{dt}v.json")  # vocabulary
 
+        # save numeric data
         torch.save(self.model.state_dict(), mfn)
         with open(bwp, "wt") as f:
             json.dump(self.model.state_dict(), f, cls=EncodeTensor)
+        grads = {}
+        for k, v in self.model.state_dict(keep_vars=True).items():
+            grads[k+".grad"] = v.grad
+        with open(bwg, "wt") as f:
+            json.dump(grads, f, cls=EncodeTensor)
         # with open(btp, "wt") as f:
         #     json.dump(kwa["tokens"], f, cls=EncodeTensor)
         with open(bvp, "wt") as f:
             json.dump(kwa["vocab"], f, cls=EncodeTensor)
+
         # Print model's state_dict
         with open(tfn, 'wt') as f:
             f.write("Model's parameters:\n")
