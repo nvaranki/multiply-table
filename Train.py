@@ -59,9 +59,9 @@ class Train:
 
             if floss is not None:
                 loss_item = floss
-                if int(loss_item*100000000) == 0:
+                if int(loss_item*100000000) <= 1:
                     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
-                elif int(loss_item*10000) == 0:
+                elif int(loss_item*10000) <= 1:
                     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
                 else:
                     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
