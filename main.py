@@ -4,7 +4,7 @@ from MultiplyModel import MultiplyModel
 from TextDataset import TextDataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
-from Train import Train
+from Trainer import Trainer
 
 
 # Press the green button in the gutter to run the script.
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     args = cli.parse_args()
 
     # TODO load blank only, use 0 as padding index
-    ds = TextDataset(Train.generate((1,10),(1,10), [" * ", " times "], [" = ", " equals "]))
+    ds = TextDataset(Trainer.generate((1, 10), (1, 10), [" * ", " times "], [" = ", " equals "]))
     dl = DataLoader(ds, batch_size=5, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
 
     # Model parameters
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # Training loop
     num_epochs = 400  # Loss: 0.0044 # TODO 100
     learning_rate = 0.0005
-    trainer = Train(model, ds.vocab_size, ds.vocab_size, learning_rate)
+    trainer = Trainer(model, ds.vocab_size, ds.vocab_size, learning_rate)
     backup = trainer.load("data") if not args.new else None
     print("New model has been created." if backup is None
           else f"Loaded last saved weights from \"{backup}\" into the model.")

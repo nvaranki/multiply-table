@@ -18,7 +18,7 @@ class EncodeTensor(JSONEncoder, Dataset):
             return super(EncodeTensor, self).default(obj)
 
 
-class Train:
+class Trainer:
 
     vocab_size: int
     model: nn.Module
