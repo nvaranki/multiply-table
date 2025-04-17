@@ -18,7 +18,7 @@ class DecoderLoss(nn.L1Loss):
         for i in range(sz):
             t2[:, i] = idx.remainder(2)
             idx = idx.divide(2).floor().to(dtype=torch.int)
-        return t2
+        return t2*2-1  # bipolar
 
 
 class BinaryDecoder(nn.Module):

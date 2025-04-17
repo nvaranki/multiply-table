@@ -29,9 +29,8 @@ class Train:
         self.model = model
         self.vocab_size = vocab_size
         self.padding_value = padding_value
-        self.criterion = nn.CrossEntropyLoss(ignore_index=vocab_size)
         self.criterion = nn.MSELoss()
-        self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
+        self.optimizer = op.NAdam(model.parameters(), lr=learning_rate)  # Epoch [400/400], Loss: 0.6088 snapshot20250414182153
 
     def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
         floss = None
