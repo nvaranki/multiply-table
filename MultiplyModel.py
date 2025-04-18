@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear, Dropout, LayerNorm, Parameter
 from torch.nn.init import xavier_uniform_, constant_
-from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 
 from BinaryDecoder import BinaryDecoder
 
@@ -46,9 +45,6 @@ class MultiheadAttention(nn.Module):
 
         self.in_proj_bias = Parameter(torch.empty(3 * embed_dim, **factory_kwargs))
         constant_(self.in_proj_bias, 0.0)
-
-        self.out_proj = NonDynamicallyQuantizableLinear(embed_dim, embed_dim, bias=bias, **factory_kwargs)
-        constant_(self.out_proj.bias, 0.0)
 
         self.bias_k = self.bias_v = None
 
@@ -100,8 +96,6 @@ class MultiheadAttention(nn.Module):
             self.bias_v,
             self.add_zero_attn,
             self.dropout,
-            self.out_proj.weight,
-            self.out_proj.bias,
             training=self.training,
             key_padding_mask=key_padding_mask,
             need_weights=need_weights,
@@ -127,8 +121,6 @@ class MultiheadAttention(nn.Module):
             bias_v: Optional[Tensor],
             add_zero_attn: bool,
             dropout_p: float,
-            out_proj_weight: Tensor,
-            out_proj_bias: Optional[Tensor],
             training: bool = True,
             key_padding_mask: Optional[Tensor] = None,
             need_weights: bool = True,
@@ -179,12 +171,7 @@ class MultiheadAttention(nn.Module):
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal
         )
-        attn_output = (
-            attn_output.permute(2, 0, 1, 3).contiguous().view(bsz * tgt_len, embed_dim)
-        )
-
-        attn_output = F.linear(attn_output, out_proj_weight, out_proj_bias)  # TODO
-        attn_output = attn_output.view(tgt_len, bsz, attn_output.size(1))
+        attn_output = attn_output.permute(2, 0, 1, 3).view(tgt_len, bsz, embed_dim)
         return attn_output, None
 
 
@@ -255,7 +242,7 @@ class TransformerEncoderLayer(nn.Module):
             need_weights=False,
             is_causal=is_causal,
         )[0]
-        return self.dropout1(x)
+        return x
 
     # feed forward block
     def _ff_block(self, x: Tensor) -> Tensor:
