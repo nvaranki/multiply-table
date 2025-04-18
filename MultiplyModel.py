@@ -179,10 +179,12 @@ class TransformerEncoderLayer(nn.Module):
 
     def __init__(self,
             d_model: int,
+            nhead: int,
             dim_feedforward: int = 2048,
             dropout: float = 0.1,
             activation: Union[str, Callable[[Tensor], Tensor]] = F.relu,
             layer_norm_eps: float = 1e-5,
+            batch_first: bool = False,
             device=None,
             dtype=None
         ):
@@ -203,7 +205,6 @@ class TransformerEncoderLayer(nn.Module):
         self.linear2 = Linear(dim_feedforward, d_model, **factory_kwargs)
         self.norm1 = LayerNorm(d_model, eps=layer_norm_eps, **factory_kwargs)
         self.norm2 = LayerNorm(d_model, eps=layer_norm_eps, **factory_kwargs)
-        self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
         if activation is F.relu or isinstance(activation, torch.nn.ReLU):
             self.activation_relu_or_gelu = 1
@@ -250,6 +251,121 @@ class TransformerEncoderLayer(nn.Module):
         return self.dropout2(x)
 
 
+class TransformerDecoderLayer(nn.Module):
+
+    def __init__(
+        self,
+        d_model: int,
+        nhead: int,
+        dim_feedforward: int = 2048,
+        dropout: float = 0.1,
+        activation: Union[str, Callable[[Tensor], Tensor]] = F.relu,
+        layer_norm_eps: float = 1e-5,
+        batch_first: bool = False,
+        norm_first: bool = False,
+        bias: bool = True,
+        device=None,
+        dtype=None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+        # Implementation of SA and MHA
+        self.self_attn = MultiheadAttention(
+            d_model,
+            nhead,
+            dropout=dropout,
+            batch_first=batch_first,
+            bias=bias,
+            **factory_kwargs,
+        )
+        self.multihead_attn = MultiheadAttention(
+            d_model,
+            nhead,
+            dropout=dropout,
+            batch_first=batch_first,
+            bias=bias,
+            **factory_kwargs,
+        )
+        # Implementation of Feedforward model
+        self.linear1 = Linear(d_model, dim_feedforward, bias=bias, **factory_kwargs)
+        self.dropout = Dropout(dropout)
+        self.linear2 = Linear(dim_feedforward, d_model, bias=bias, **factory_kwargs)
+        self.norm_first = norm_first
+        self.norm1 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
+        self.norm2 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
+        self.norm3 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
+        self.dropout3 = Dropout(dropout)
+        # Legacy string support for activation function.
+        if activation is F.relu or isinstance(activation, torch.nn.ReLU):
+            self.activation_relu_or_gelu = 1
+        elif activation is F.gelu or isinstance(activation, torch.nn.GELU):
+            self.activation_relu_or_gelu = 2
+        else:
+            self.activation_relu_or_gelu = 0
+        self.activation = activation
+
+    def forward(
+        self,
+        tgt: Tensor,
+        memory: Tensor,
+        tgt_mask: Optional[Tensor] = None,
+        memory_mask: Optional[Tensor] = None,
+        tgt_key_padding_mask: Optional[Tensor] = None,
+        memory_key_padding_mask: Optional[Tensor] = None,
+        tgt_is_causal: bool = False,
+        memory_is_causal: bool = False,
+    ) -> Tensor:
+        x = tgt
+        x = self.norm1(x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal))
+        x = self.norm2(x + self._mha_block(x, memory, memory_mask, memory_key_padding_mask, memory_is_causal))
+        x = self.norm3(x + self._ff_block(x))
+        return x
+
+    # self-attention block
+    def _sa_block(
+        self,
+        x: Tensor,
+        attn_mask: Optional[Tensor],
+        key_padding_mask: Optional[Tensor],
+        is_causal: bool = False,
+    ) -> Tensor:
+        x = self.self_attn(
+            x,
+            x,
+            x,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            is_causal=is_causal,
+            need_weights=False,
+        )[0]
+        return x  #self.dropout1(x)
+
+    # multi-head attention block
+    def _mha_block(
+        self,
+        x: Tensor,
+        mem: Tensor,
+        attn_mask: Optional[Tensor],
+        key_padding_mask: Optional[Tensor],
+        is_causal: bool = False,
+    ) -> Tensor:
+        x = self.multihead_attn(
+            x,
+            mem,
+            mem,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            is_causal=is_causal,
+            need_weights=False,
+        )[0]
+        return x  #self.dropout2(x)
+
+    # feed forward block
+    def _ff_block(self, x: Tensor) -> Tensor:
+        x = self.linear2(self.dropout(self.activation(self.linear1(x))))
+        return self.dropout3(x)
+
+
 class MultiplyModel(nn.Module):
 
     def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, device = None, dtype = None):
@@ -258,11 +374,12 @@ class MultiplyModel(nn.Module):
         self.dtype=dtype
         self.embedding = nn.Embedding(vocab_size+1, embed_size, padding_idx=vocab_size, device=device, dtype=dtype)
         self.encoder = nn.TransformerEncoder(
-            TransformerEncoderLayer(embed_size, hidden_dim, activation=F.tanh, device=device, dtype=dtype),
+            TransformerEncoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
             num_layers
         )
         self.decoder = nn.TransformerDecoder(
-            nn.TransformerDecoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
+            # nn.TransformerDecoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
+            TransformerDecoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
             num_layers
         )
         self.bdec = BinaryDecoder(embed_size)
