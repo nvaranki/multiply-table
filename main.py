@@ -36,7 +36,7 @@ if __name__ == '__main__':
     if args.new or args.__dict__["continue"]:
 
         # Training loop
-        print("Running in model training mode.")
+        print("Running the model in training mode.")
         num_epochs = 400
         learning_rate = 0.0005
         trainer = Trainer(model, ds.vocab_size, learning_rate)
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     else:
 
         # Running loop
-        print("Running in model inference mode.")
+        print("Running the model in inference mode.")
         runner = Runner(model, ds.vocab_size)
         weights = runner.load("data")
         if weights is None:
