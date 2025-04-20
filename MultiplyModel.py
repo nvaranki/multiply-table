@@ -203,8 +203,6 @@ class TransformerEncoderLayer(nn.Module):
         self.linear1 = Linear(d_model, dim_feedforward, **factory_kwargs)
         self.dropout = Dropout(dropout)
         self.linear2 = Linear(dim_feedforward, d_model, **factory_kwargs)
-        self.norm1 = LayerNorm(d_model, eps=layer_norm_eps, **factory_kwargs)
-        self.norm2 = LayerNorm(d_model, eps=layer_norm_eps, **factory_kwargs)
         self.dropout2 = Dropout(dropout)
         if activation is F.relu or isinstance(activation, torch.nn.ReLU):
             self.activation_relu_or_gelu = 1
@@ -221,8 +219,8 @@ class TransformerEncoderLayer(nn.Module):
             is_causal: bool = False,
         ) -> Tensor:
         x = src
-        x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal))
-        x = self.norm2(x + self._ff_block(x))
+        x = x + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal)
+        x = x + self._ff_block(x)
 
         return x
 
@@ -291,9 +289,6 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout = Dropout(dropout)
         self.linear2 = Linear(dim_feedforward, d_model, bias=bias, **factory_kwargs)
         self.norm_first = norm_first
-        self.norm1 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
-        self.norm2 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
-        self.norm3 = LayerNorm(d_model, eps=layer_norm_eps, bias=bias, **factory_kwargs)
         self.dropout3 = Dropout(dropout)
         # Legacy string support for activation function.
         if activation is F.relu or isinstance(activation, torch.nn.ReLU):
@@ -316,9 +311,9 @@ class TransformerDecoderLayer(nn.Module):
         memory_is_causal: bool = False,
     ) -> Tensor:
         x = tgt
-        x = self.norm1(x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal))
-        x = self.norm2(x + self._mha_block(x, memory, memory_mask, memory_key_padding_mask, memory_is_causal))
-        x = self.norm3(x + self._ff_block(x))
+        x = x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal)
+        x = x + self._mha_block(x, memory, memory_mask, memory_key_padding_mask, memory_is_causal)
+        x = x + self._ff_block(x)
         return x
 
     # self-attention block
