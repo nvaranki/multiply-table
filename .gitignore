@@ -1,4 +1,6 @@
 .venv/
 .idea/workspace.xml
-data/snapshot*.*
+__pycache__/
+data/**/snapshot*.*
+data/*.json
 data/media/
