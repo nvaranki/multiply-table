@@ -1,12 +1,12 @@
 import json
-from typing import List, Union
-
 import os.path
-import torch
-import torch.nn as nn
-import torch.optim as op
-from torch.utils.data import Dataset
 from json import JSONEncoder
+from typing import Union
+
+import torch
+from torch.utils.data import Dataset
+
+from MultiplyModel import MultiplyModel
 
 
 class EncodeTensor(JSONEncoder, Dataset):
@@ -17,63 +17,12 @@ class EncodeTensor(JSONEncoder, Dataset):
             return super(EncodeTensor, self).default(obj)
 
 
-class Train:
+class Loadable:
 
-    vocab_size: int
-    model: nn.Module
-    criterion = nn.Module
-    optimizer = op.Optimizer
+    model: MultiplyModel
 
-    def __init__(self, model: nn.Module, vocab_size: int, padding_value: int, learning_rate: float):
+    def __init__(self, model: MultiplyModel):
         self.model = model
-        self.vocab_size = vocab_size
-        self.padding_value = padding_value
-        self.criterion = nn.CrossEntropyLoss(ignore_index=vocab_size)
-        self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
-
-    def run(self, num_epochs: int, dataloader, vocab_size: int, device = None):
-        floss = None
-        for epoch in range(num_epochs):
-            for batch in dataloader:
-                batch = batch.to(device)
-                src = batch[:, :-1]
-                tgt = torch.unsqueeze(batch[:, -1],dim=1)
-
-                self.optimizer.zero_grad()
-                # with torch.no_grad():
-                pad = torch.zeros(size=tgt.size(), dtype=tgt.dtype)
-                pad[:,-1] = self.padding_value
-                output = self.model(src, pad.to(device=device))
-
-                output = output.view(-1, vocab_size)
-                tgt = tgt.view(-1)
-
-                loss = self.criterion(output, tgt)
-                floss = loss
-                loss.backward()
-                self.optimizer.step()
-
-            loss_item = loss.item()
-            if int(loss_item*100000000) == 0:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
-            elif int(loss_item*10000) == 0:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
-            else:
-                print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
-
-        print("Training complete!")
-        return floss.item()
-
-    @staticmethod
-    def generate(r1: tuple, r2: tuple, op: List[str] = " * ", eq: List[str] = " = ") -> List[str]:
-        rl = list()
-        # TODO "six times two equals twelve"
-        for o in op:
-            for e in eq:
-                for a in range(r1[0],r1[1]+1):
-                    for b in range(r2[0],r2[1]+1):
-                        rl.append( str(a) + o + str(b) + e + str(a*b) )
-        return rl
 
     def load(self, dir="data") -> Union[str,None]:
         """load the last saved model"""
@@ -95,16 +44,24 @@ class Train:
         mfn = os.path.join(dir, f"snapshot{dt}.pt")     # model
         tfn = os.path.join(dir, f"snapshot{dt}.txt")    # memo
         bwp = os.path.join(dir, f"snapshot{dt}w.json")  # weighs
+        bwg = os.path.join(dir, f"snapshot{dt}g.json")  # gradients
         # btp = os.path.join(dir, f"snapshot{dt}t.json")  # tokens
         bvp = os.path.join(dir, f"snapshot{dt}v.json")  # vocabulary
 
+        # save numeric data
         torch.save(self.model.state_dict(), mfn)
         with open(bwp, "wt") as f:
             json.dump(self.model.state_dict(), f, cls=EncodeTensor)
+        grads = {}
+        for k, v in self.model.state_dict(keep_vars=True).items():
+            grads[k+".grad"] = v.grad
+        with open(bwg, "wt") as f:
+            json.dump(grads, f, cls=EncodeTensor)
         # with open(btp, "wt") as f:
         #     json.dump(kwa["tokens"], f, cls=EncodeTensor)
         with open(bvp, "wt") as f:
             json.dump(kwa["vocab"], f, cls=EncodeTensor)
+
         # Print model's state_dict
         with open(tfn, 'wt') as f:
             f.write("Model's parameters:\n")

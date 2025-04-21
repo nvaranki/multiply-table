@@ -1,3 +1,6 @@
+from typing import Optional, Tuple, Union, Callable
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -6,6 +9,8 @@ class MultiplyModel(nn.Module):
 
     def __init__(self, vocab_size, embed_size, num_heads, hidden_dim, num_layers, device = None, dtype = None):
         super(MultiplyModel, self).__init__()
+        self.device=device
+        self.dtype=dtype
         self.embedding = nn.Embedding(vocab_size+1, embed_size, padding_idx=vocab_size, device=device, dtype=dtype)
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(embed_size, num_heads, hidden_dim, batch_first=True, device=device, dtype=dtype),
@@ -16,6 +21,7 @@ class MultiplyModel(nn.Module):
             num_layers
         )
         self.fc = nn.Linear(embed_size, vocab_size, device=device, dtype=dtype)
+        self.vocab_size = vocab_size
 
     def forward(self, src, tgt, src_mask=None, tgt_mask=None, memory_mask=None):
         src_embedded = self.embedding(src)
