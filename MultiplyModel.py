@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Linear, Dropout, LayerNorm, Parameter
+from torch.nn import Linear, Dropout, Parameter, Tanh
 from torch.nn.init import xavier_uniform_, constant_
 
 from BinaryDecoder import BinaryDecoder
@@ -203,6 +203,8 @@ class TransformerEncoderLayer(nn.Module):
         self.linear1 = Linear(d_model, dim_feedforward, **factory_kwargs)
         self.dropout = Dropout(dropout)
         self.linear2 = Linear(dim_feedforward, d_model, **factory_kwargs)
+        self.norm1 = Tanh()
+        self.norm2 = Tanh()
         self.dropout2 = Dropout(dropout)
         if activation is F.relu or isinstance(activation, torch.nn.ReLU):
             self.activation_relu_or_gelu = 1
@@ -219,8 +221,8 @@ class TransformerEncoderLayer(nn.Module):
             is_causal: bool = False,
         ) -> Tensor:
         x = src
-        x = x + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal)
-        x = x + self._ff_block(x)
+        x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal))
+        x = self.norm2(x + self._ff_block(x))
 
         return x
 
@@ -288,6 +290,9 @@ class TransformerDecoderLayer(nn.Module):
         self.linear1 = Linear(d_model, dim_feedforward, bias=bias, **factory_kwargs)
         self.dropout = Dropout(dropout)
         self.linear2 = Linear(dim_feedforward, d_model, bias=bias, **factory_kwargs)
+        self.norm1 = Tanh()
+        self.norm2 = Tanh()
+        self.norm3 = Tanh()
         self.norm_first = norm_first
         self.dropout3 = Dropout(dropout)
         # Legacy string support for activation function.
@@ -311,9 +316,9 @@ class TransformerDecoderLayer(nn.Module):
         memory_is_causal: bool = False,
     ) -> Tensor:
         x = tgt
-        x = x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal)
-        x = x + self._mha_block(x, memory, memory_mask, memory_key_padding_mask, memory_is_causal)
-        x = x + self._ff_block(x)
+        x = self.norm1(x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal))
+        x = self.norm2(x + self._mha_block(x, memory, memory_mask, memory_key_padding_mask, memory_is_causal))
+        x = self.norm3(x + self._ff_block(x))
         return x
 
     # self-attention block
