@@ -378,7 +378,6 @@ class MultiplyModel(nn.Module):
             num_layers
         )
         self.decoder = nn.TransformerDecoder(
-            # nn.TransformerDecoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
             TransformerDecoderLayer(embed_size, num_heads, hidden_dim, activation=F.tanh, batch_first=True, device=device, dtype=dtype),
             num_layers
         )
