@@ -23,11 +23,10 @@ class Runner(Loadable):
                 pad[:,-1] = self.padding_value
                 output = self.model(src, pad)
 
-                output = output.view(-1, self.model.vocab_size)
+                tokens = self.model.tokens(output)
                 tgt = tgt.view(-1)
-
-                tokens = output.max(dim=-1).indices
                 fail = tokens - tgt
                 if fail.abs().to(dtype=torch.bool).any().item():
                     print(f"Error: found={tokens.detach().cpu().numpy()} expected={tgt.detach().cpu().numpy()} \n\tsource={src.detach().cpu().numpy()}")
+
         print(f"{len(dataloader.dataset)} records were processed.")
