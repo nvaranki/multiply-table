@@ -4,7 +4,7 @@ import torch.cuda
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
-from MultiplyModel import MultiplyModel
+from BinaryTreeMultiplyModel import BinaryTreeMultiplyModel
 from Runner import Runner
 from TextDataset import TextDataset
 from Trainer import Trainer
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     num_layers = 1  # last three were useless 4  # faster than 8 Loss: 0.0476
     device = torch.device("cuda:0")
     dtype = torch.float
-    model = MultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
+    model = BinaryTreeMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
 
     if args.new or args.__dict__["continue"]:
 

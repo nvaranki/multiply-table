@@ -4,12 +4,11 @@ from json import JSONEncoder
 from typing import Union
 
 import torch
-from torch.utils.data import Dataset
 
 from MultiplyModel import MultiplyModel
 
 
-class EncodeTensor(JSONEncoder, Dataset):
+class EncodeTensor(JSONEncoder, torch.utils.data.Dataset):
     def default(self, obj):
         if isinstance(obj, torch.Tensor):
             return obj.cpu().detach().numpy().tolist()

@@ -37,7 +37,7 @@ class BinaryDecoder(nn.Module):
         # done
         return (i, tl)
 
-    def vector(self, index: Tensor)-> Tensor:
+    def vector(self, index: Tensor) -> Tensor:
         idx = index.clone().to(dtype=torch.int)
         t2 = torch.zeros((idx.size(0),self.depth), dtype=torch.float, device=idx.device)
         for i in range(self.depth):

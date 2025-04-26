@@ -34,23 +34,19 @@ class Trainer(Loadable):
                 pad[:,-1] = self.padding_value
                 output = self.model(src, pad)
 
-                output = output.view(-1, self.model.embed_size)
-                tgt = tgt.view(-1)
-
-                loss = self.criterion(output, self.model.bdec.vector(tgt))
+                loss = self.criterion(output, self.model.target(tgt.view(-1)))
                 nb += 1
                 floss += (loss.item()-floss)/nb  # mean across all batches within epoch
                 loss.backward()
                 self.optimizer.step()
 
             if floss is not None:
-                loss_item = floss
-                if int(loss_item*100000000) <= 1:
-                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.12f}")
-                elif int(loss_item*10000) <= 1:
-                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.8f}")
+                if int(floss*100000000) <= 9:
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {floss :.12f}")
+                elif int(floss*10000) <= 9:
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {floss :.8f}")
                 else:
-                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss_item :.4f}")
+                    print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {floss :.4f}")
 
         print(f"Training complete for {len(dataloader.dataset)} samples.")
         return floss
