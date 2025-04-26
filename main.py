@@ -1,9 +1,12 @@
 import argparse
 
 import torch.cuda
+import torch.nn as nn
+import torch.optim as op
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
+from BinaryTreeMultiplyModel import BinaryTreeMultiplyModel
 from MajorValueMultiplyModel import MajorValueMultiplyModel
 from Runner import Runner
 from TextDataset import TextDataset
@@ -25,21 +28,32 @@ if __name__ == '__main__':
     dl = DataLoader(ds, batch_size=5, collate_fn=lambda x: pad_sequence(x, batch_first=True, padding_value=ds.vocab_size))
 
     # Model parameters
-    embed_size = 6
     num_heads = 1  # Loss: 0.0462 TODO 4 Loss: 0.1402
     hidden_dim = 16
     num_layers = 1  # last three were useless 4  # faster than 8 Loss: 0.0476
     device = torch.device("cuda:0")
     dtype = torch.float
-    model = MajorValueMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
+    btmm = True
+    if btmm:
+        embed_size = 16  # 20 good more  # 24 even better
+        model = BinaryTreeMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
+    else:
+        embed_size = 6
+        model = MajorValueMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
 
     if args.new or args.__dict__["continue"]:
 
-        # Training loop
         print("Running the model in training mode.")
         num_epochs = 400
-        learning_rate = 0.001
-        trainer = Trainer(model, ds.vocab_size, learning_rate)
+        if btmm:
+            learning_rate = 0.0005
+            criterion = nn.MSELoss()
+            optimizer = op.NAdam(model.parameters(), lr=learning_rate)
+        else:
+            learning_rate = 0.001
+            criterion = nn.CrossEntropyLoss(ignore_index=ds.vocab_size)
+            optimizer = op.Adam(model.parameters(), lr=learning_rate)
+        trainer = Trainer(model, criterion, optimizer, ds.vocab_size, learning_rate)
         backup = trainer.load("data") if not args.new else None
         print("New model has been created." if backup is None
               else f"Last saved weights are loaded from the \"{backup}\" into the model.")
@@ -59,6 +73,5 @@ if __name__ == '__main__':
         else:
             print(f"Weights are loaded from the \"{weights}\" into the model.")
             runner.run(dl)
-        pass
 
     print("Well done!")

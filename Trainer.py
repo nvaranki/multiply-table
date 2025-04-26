@@ -12,11 +12,11 @@ class Trainer(Loadable):
     criterion = nn.Module
     optimizer = op.Optimizer
 
-    def __init__(self, model: MultiplyModel, padding_value: int, learning_rate: float):
+    def __init__(self, model: MultiplyModel, criterion, optimizer, padding_value: int, learning_rate: float):
         super(Trainer, self).__init__(model)
         self.padding_value = padding_value
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.model.vocab_size)
-        self.optimizer = op.Adam(model.parameters(), lr=learning_rate)
+        self.criterion = criterion
+        self.optimizer = optimizer
 
     def run(self, num_epochs: int, dataloader: DataLoader):
         floss = None
