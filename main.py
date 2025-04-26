@@ -37,12 +37,15 @@ if __name__ == '__main__':
     if btmm:
         embed_size = 16  # 20 good more  # 24 even better
         model = BinaryTreeMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
+        print("BinaryTreeMultiplyModel model is selected.")
     else:
         embed_size = 6
         model = MajorValueMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
+        print("MajorValueMultiplyModel model is selected.")
 
     if args.new or args.__dict__["continue"]:
 
+        # Learning loop
         print("Running the model in training mode.")
         num_epochs = 400
         if btmm:
