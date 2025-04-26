@@ -17,6 +17,8 @@ if __name__ == '__main__':
 
     # application parameters
     cli = argparse.ArgumentParser(description="Multiplying Table")
+    cli.add_argument("-model", default="bt",
+                     metavar="MODEL", help="select type of the model: 'bt' for BinaryTreeMultiplyModel, or 'mv' for MajorValueMultiplyModel")
     cli.add_argument("--new", action='store_const', const=True, required=False, default=False,
                      metavar="NEW", help="start training with blank model")
     cli.add_argument("--continue", action='store_const', const=True, required=False, default=False,
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     num_layers = 1  # last three were useless 4  # faster than 8 Loss: 0.0476
     device = torch.device("cuda:0")
     dtype = torch.float
-    btmm = True
+    btmm = args.model == "bt"
     if btmm:
         embed_size = 16  # 20 good more  # 24 even better
         model = BinaryTreeMultiplyModel(ds.vocab_size, embed_size, num_heads, hidden_dim, num_layers, device, dtype)
